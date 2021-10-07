@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrap data and visualization</title>
+</head>
+<body>
+    <main>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Select version to compare with
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              {%for comp in company %}
+                <a class="dropdown-item" href="{% url 'stock' comp.Symbol %}">{{comp.Symbol}}</a>
+              {% endfor %}
+              <h1>{{monetary.GDP}}</h1>
+            </div>
+          </div>
+</main>
+</body>
+</html>
