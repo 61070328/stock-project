@@ -1,11 +1,18 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import  JsonResponse
 from django.shortcuts import render, redirect
 import pandas as pd
-from .models import Trader
+import numpy as np
 import json
+from bs4 import BeautifulSoup
+import requests
+import time
+import urllib.request as urllib2
 from .stock_module import stock
-
+from .stock_data import data_about_stock
+from ..fusioncharts import FusionCharts
+from ..fusioncharts import FusionTable
+from ..fusioncharts import TimeSeries
 from yahoo_fin.stock_info import get_live_price, get_data
 
 # import time
@@ -15,54 +22,56 @@ import yfinance as yf
 #     return HttpResponse('Hello')
     
 def symbol_company(request):
-    company = [
-        {'Name':'JMART.BK','Symbol':'JMART'},
-        {'Name':'DELTA.BK','Symbol':'DELTA'},
-        {'Name':'ADVANC.BK','Symbol':'ADVANC'},
-        {'Name':'ALT.BK','Symbol':'ALT'},
-        {'Name':'AIT.BK','Symbol':'AIT'},
-        {'Name':'DIF.BK','Symbol':'DIF'},
-        {'Name':'DTAC.BK','Symbol':'DTAC'},
-        {'Name':'INTUCH.BK','Symbol':'INTUCH'},
-        {'Name':'JTS.BK','Symbol':'JTS'},
-        {'Name':'SIS.BK','Symbol':'SIS'},
-        {'Name':'SYNEX.BK','Symbol':'SYNEX'},
-        {'Name':'THCOM.BK','Symbol':'THCOM'},
-        {'Name':'TRUE.BK','Symbol':'TRUE'},
-        {'Name':'HUMAN.BK','Symbol':'HUMAN'},
-        {'Name':'FORTH.BK','Symbol':'FORTH'}
-    ]
-    my_object = stock()
-    monetary = my_object.MonetaryPolicy()
+    
+    symbol = data_about_stock().company()
+    monetary = stock(symbol).MonetaryPolicy()
 
-
-    return render(request, 'base.html', {'company': company,
-    'monetary':monetary})
+    return render(request, 'base.html', {'company': symbol,
+    'monetary':monetary, })
 
 
 def stock_info(request, Symbol):
     data = yf.Ticker(Symbol+'.BK')
     information = data.info
-    text = {'info':'54580',
-    'ask':'d;dlf'}
-    return render(request, 'stock_overview.html',\
-      {'Symbol':Symbol})
+    stocks = stock(Symbol) # class จาก file stock_module เพื่อเข้าสู่ฟังก์ชั่นที่ทำการเขียนไว้
+    monetary = stocks.MonetaryPolicy() # GDP Market
+    under_over = stocks.under_over_stock(Symbol)
+    balance = stocks.finance_balance(Symbol) #งบแสดงฐานการเงินแบบเต็มของล่าสุด
+    income = stocks.income_statement(Symbol) # งบกำไรขาดทุนเบ็ดเสร็จ แสดงที่การเงิน
+    stockholder = stocks.stockholder(Symbol) # รายชื่อผู้ถือหุ้น
+    
+    return render(request, 'stock_overview.html',{
+      'Symbol':Symbol,
+      'monetary':monetary,
+      'balance':balance,
+      'stockholder':stockholder,
+      'under':under_over,
+      }
+      )
 
+def stock_financial(request, Symbol):
+    stocks = stock(Symbol) # class จาก file stock_module เพื่อเข้าสู่ฟังก์ชั่นที่ทำการเขียนไว้
+    balance = stocks.finance_balance(Symbol) #งบแสดงฐานการเงินแบบเต็มของล่าสุด
+    income = stocks.income_statement(Symbol) # งบกำไรขาดทุนเบ็ดเสร็จ แสดงที่การเงิน
+    stockholder = stocks.stockholder(Symbol) # รายชื่อผู้ถือหุ้น
+def finance_chart(request):
+    stock = yf.Ticker('JMART.BK')
+    infor = stock.history(period="5y")
+    infor = infor.reset_index().round(4)
+    infor['Date'] = pd.to_datetime(infor['Date']).dt.date.astype(str)
+    infor = infor.rename(columns={"Date": "t", "Close": "y"})
+    data = infor[['t','y']].to_dict('records')
+    fusionTable = FusionTable(schema, data)
+    timeSeries = TimeSeries(fusionTable)
 
-def stockholder(request, Symbol):
-      #list รายชื่อของผู้ถือหุ้นแต่ละบริษัท
-  stockholder = []
-  url_stockholder = f'https://www.set.or.th/set/companyholder.do?symbol={Symbol}&ssoPageId=6&language=th&country=TH'
-  holder =pd.read_html(url_stockholder)  
-  for row in holder[2].iterrows():
-    list_name = {
-            'id': row[0],
-            'Stockholder' : row[1][1],
-            'Amount_stock':row[1][2],
-            'Percent' :row[1][3],
-              }
-    stockholder.append(list_name)  
+    # Wrapper constructor parameters
+    # charttype, chartID, width, height, renderAt, data format, TimeSeries object
 
-  return render(request, 'stock_overview.html', {'stockholder': stockholder})
+    fcChart = FusionCharts("timeseries", "MyFirstChart" , "700", "450", "chart-container", "json", timeSeries)
 
+    # Returning complete JavaScript and HTML code, which is used to generate chart in the browsers.
+    return render(request,'base.html', {'output':fcChart.render()})
+    
+def chart(request):
+    return render(request,'base.html')
 

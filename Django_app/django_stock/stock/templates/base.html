@@ -1,24 +1,43 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Scrap data and visualization</title>
 </head>
+{% block content %}
 <body>
     <main>
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Select version to compare with
-            </button>
-            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              {%for comp in company %}
-                <a class="dropdown-item" href="{% url 'stock' comp.Symbol %}">{{comp.Symbol}}</a>
-              {% endfor %}
-              <h1>{{monetary.GDP}}</h1>
-            </div>
-          </div>
-</main>
+          <ul class="dropdown-menu">
+            {% for item in company %}
+                {% if item.Symbol %}
+                    <li class="{% if item.selected %} active{% endif %}{% if item.children %} dropdown-submenu{% endif %}">
+                        <a href="{{ item.Symbol }}">{{ item.Symbol }}</a>
+                        {% if item.children %}
+                            {% with items=item.children template_name='stock_overview.html' %}
+                               {% include template_name %}
+                            {% endwith %}
+                        {% endif %}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    <div id="container" style="width: 75%;">
+        <canvas id="myChart" width="400" height="400" data-json="{{ price }}" ></canvas>
+    </div>
+
+
+    </main>
+ {% endblock %}
 </body>
+
+
+<script type="text/javascript" src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
+
+<script type="text/javascript" src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.timeseries.js"></script>
 </html>

@@ -1,4 +1,6 @@
 {% load static %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,13 +16,77 @@
         <article>
             
                 <h1>{{ text }}</h1>
+                <h1>{{under.Label}} + {{under.Percent}}</h1>
                 <h2>{{ Symbol }}</h2>
-            
-            
+                <p>{{ monetary.GDP}}, {{monetary.Inflation}}</p>
             {% for stockhol in stockholder %}
-                <h1>{{ stockhol.Amount_stock}}</h1>
+                <h3 style="color:red">{{stockhol.Stockholder}}</h3>
+                <h1>{{Stockhol.id}}</h1>
+            {% endfor %}
+            
+            {% for bala in balance %}
+                <h1>{{ bala.Name}} {{bala.Unit}}</h1>
+
             {% endfor %}
         </article>
+        
+
+
+  <div id="container" style="width: 75%;">
+    <canvas id="finance-chart" ></canvas>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+  <script>
+
+    $(function () {
+
+      var $financeChart = $("#finance-ch art");
+      $.ajax({
+        url: $financeChart.data("url"),
+        success: function (data) {
+
+          var ctx = $financeChart[0].getContext("2d");
+
+          
+          const data = {
+            labels: [{% for data in date %}'{{ data }}'{% endfor %}],
+            datasets: [{
+              axis: 'y',
+              label: 'My First Dataset',
+              data: [{% for data in close %}'{{ data }}'{% endfor %}],
+              fill: false,
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(255, 159, 64, 0.2)',
+                'rgba(255, 205, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(201, 203, 207, 0.2)'
+              ],
+              borderColor: [
+                'rgb(255, 99, 132)',
+                'rgb(255, 159, 64)',
+                'rgb(255, 205, 86)',
+                'rgb(75, 192, 192)',
+                'rgb(54, 162, 235)',
+                'rgb(153, 102, 255)',
+                'rgb(201, 203, 207)'
+              ],
+              borderWidth: 1
+            }]
+          };
+
+        }
+      });
+
+    });
+
+  </script>
+
+{% endblock %}
     </main>
 </body>
 </html>
